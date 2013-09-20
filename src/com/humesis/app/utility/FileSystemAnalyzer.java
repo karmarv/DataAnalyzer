@@ -34,7 +34,7 @@ public class FileSystemAnalyzer implements DataAnalyzer {
     int fileCount = 0;
 
     public FileSystemAnalyzer() {
-        //Constructor
+      
     }
 
     @Override
@@ -42,16 +42,22 @@ public class FileSystemAnalyzer implements DataAnalyzer {
         File file = new File(path);
         return file;
     }
-    
+
     @Override
     public void updateFolderMetaDataStore(String folderPath) {
         File file = new File(folderPath);
+        /*
+         * Cleanup the cached MetaDataStore
+         */
+        lFolderMetaDataStore.clear();
+        lFileMetaDataStore.clear();
         updateFolderMetaDataStore(file);
     }
 
     @Override
     public void updateFolderMetaDataStore(File folder) {
         try {
+
             File[] parentList = folder.listFiles();
             for (int i = 0; i < parentList.length; i++) {
                 /*
@@ -79,6 +85,7 @@ public class FileSystemAnalyzer implements DataAnalyzer {
     @Override
     public void updateSupportedDataTypeExtensionStore() {
         try {
+            mSupportedDataTypeExtensionStore.clear();
             PropertyResourceBundle p = new PropertyResourceBundle(new FileInputStream("resources\\configuration.properties"));
             System.out.println(p.keySet().size() + " Properties read successfully ");
             for (String key : p.keySet()) {
@@ -99,8 +106,9 @@ public class FileSystemAnalyzer implements DataAnalyzer {
         try {
             //LOGIC: Get the Data type by the file extension and ext cannot be greater than 10 chars
             dataType = DataUtility.getDataExtension(file.getCanonicalPath());
-            if(dataType.length()>10)
+            if (dataType.length() > 10) {
                 dataType = "";
+            }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, null, ex);
         }
@@ -116,7 +124,7 @@ public class FileSystemAnalyzer implements DataAnalyzer {
          */
         String dataType = getFileDataType(file);
         for (Map.Entry<String, ArrayList<String>> m : mSupportedDataTypeExtensionStore.entrySet()) {
-            if (m.getValue().contains(dataType)) {
+            if (m.getValue().contains(dataType.toLowerCase()) || m.getValue().contains(dataType.toUpperCase())) {
                 return m.getKey();
             }
         }
@@ -134,7 +142,7 @@ public class FileSystemAnalyzer implements DataAnalyzer {
          * For each DataType={IMAGE,DOCUMENT,AUDIO,VIDEO...} create & update an AnalyzedData object
          * For each ExtensionType{IMAGE->jpg,bmp,png} in a DataType create & update a DataStats list object
          */
-        System.out.println("Analyzing "+ folderPath);
+        System.out.println("Analyzing " + folderPath);
         //Clear Master Analysis
         mAnalyzedDataStore.clear();
         //List for the interim store of the analyzed data
@@ -202,8 +210,8 @@ public class FileSystemAnalyzer implements DataAnalyzer {
                 mInterimAnalysisCategoryStore.put(categoryType, dc);
                 catCount++;
             }
-        }                
-        
+        }
+
         ArrayList<AnalyzedData> lAnalyzed = new ArrayList<>();
         for (Map.Entry<String, Map<String, DataStats>> e : mInterimAnalysisExtensionStore.entrySet()) {
             System.out.println(e.getKey() + ", Extensions: " + e.getValue().keySet());
